@@ -56,10 +56,10 @@ data:
   init_args:
     config:
       data_name: rope_koch_fixed
-      processed_data_name: rope_koch_fixed-128x192
+      processed_data_name: rope_koch_fixed-120x160
       batch_size: 4
       num_workers: 4
-      train_ratio: 0.9
+      train_ratio: 0.75
       gdrive_id: 1ERZeS4kfuA8OdFOhAoUcGgPMY15QTry5
       data_defs:
         - prefix: action*
@@ -126,7 +126,7 @@ data:
                     std: 255.0
                 - class_path: torchvision.transforms.Resize
                   init_args:
-                    size: [128, 192]
+                    size: [120, 160]
                 - class_path: gpt_worldmodel.transform.Tokenizer
                   init_args:
                     model_name: Cosmos-Tokenizer-DV4x8x8

@@ -218,11 +218,6 @@ class GPTWorldModel(LightningModule):
         """
         action_inputs, _, codes_input, codes_target = batch
 
-        if self.training:
-            random_mask = torch.rand_like(codes_input.float()) < 0.5  # noqa: PLR2004
-            random_values = torch.randint_like(codes_input, 0, self.factored_vocab_size ** self.num_factored_vocabs)
-            codes_input = torch.where(random_mask, random_values, codes_input)
-
         logits = self.compute_logits(actions=action_inputs, codes=codes_input)
         logits = rearrange(
             logits,
