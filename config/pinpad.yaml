@@ -1,0 +1,161 @@
+---
+seed_everything: 42
+
+model:
+  class_path: gpt_worldmodel.worldmodel.GPTWorldModel
+  init_args:
+    num_heads: 4
+    num_layers: 8
+    num_factored_vocabs: 2
+    factored_vocab_size: 128
+    embed_size: 128
+    max_length: 15
+    action_size: 5
+
+optimizer:
+  class_path: torch.optim.AdamW
+  init_args:
+    lr: 0.001
+
+trainer:
+  accelerator: gpu
+  max_epochs: -1
+  gradient_clip_val: 1
+  precision: 16-mixed
+  log_every_n_steps: 1
+  logger:
+    class_path: WandbLogger
+    init_args:
+      log_model: true
+      project: gpt-worldmodel-test(pinpad)
+      save_dir: .venv
+  callbacks:
+    -
+      class_path: LearningRateMonitor
+    -
+      class_path: EarlyStopping
+      init_args:
+        monitor: val_loss
+        patience: 200
+        mode: min
+        verbose: True
+    -
+      class_path: ModelCheckpoint
+      init_args:
+        monitor: val_loss
+        mode: min
+        save_top_k: 1
+
+data:
+  class_path: gpt_worldmodel.dataset.EpisodeDataModule
+  init_args:
+    config:
+      data_name: scripted_pinpad
+      processed_data_name: scripted_pinpad-256x256
+      batch_size: 4
+      num_workers: 4
+      train_ratio: 0.8
+      gdrive_id: 1XeR0FnL6yBJnqRAx--QjRW8sMlrSoOS0
+      data_defs:
+        - prefix: action*
+          preprocess:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.IntegerToOneHot
+                  init_args:
+                    num_classes: 5
+          train_input_transform:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.RandomWindow
+                  init_args:
+                    window_size: 16
+                - class_path: gpt_worldmodel.transform.RemoveTail
+          train_target_transform:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.RandomWindow
+                  init_args:
+                    window_size: 16
+                - class_path: gpt_worldmodel.transform.RemoveHead
+          val_input_transform:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.RandomWindow
+                  init_args:
+                    window_size: 16
+                - class_path: gpt_worldmodel.transform.RemoveTail
+          val_target_transform:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.RandomWindow
+                  init_args:
+                    window_size: 16
+                - class_path: gpt_worldmodel.transform.RemoveHead
+          predict_input_transform:
+            class_path: torch.nn.Identity
+          predict_target_transform:
+            class_path: torch.nn.Identity
+        - prefix: observation*
+          preprocess:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: einops.layers.torch.Rearrange
+                  init_args:
+                    pattern: B H W C -> B C H W
+                - class_path: torchvision.transforms.Normalize
+                  init_args:
+                    mean: 0.0
+                    std: 255.0
+                - class_path: torchvision.transforms.Resize
+                  init_args:
+                    size: [256, 256]
+                - class_path: gpt_worldmodel.transform.Tokenizer
+                  init_args:
+                    model_name: LlamaGen-D-8x8
+          train_input_transform:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.RandomWindow
+                  init_args:
+                    window_size: 16
+                - class_path: gpt_worldmodel.transform.RemoveTail
+                - class_path: gpt_worldmodel.transform.MaskGitAugmentation
+                  init_args:
+                    num_factored_vocabs: 2
+                    factored_vocab_size: 128
+          train_target_transform:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.RandomWindow
+                  init_args:
+                    window_size: 16
+                - class_path: gpt_worldmodel.transform.RemoveHead
+          val_input_transform:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.RandomWindow
+                  init_args:
+                    window_size: 16
+                - class_path: gpt_worldmodel.transform.RemoveTail
+          val_target_transform:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.RandomWindow
+                  init_args:
+                    window_size: 16
+                - class_path: gpt_worldmodel.transform.RemoveHead
+          predict_input_transform:
+            class_path: torch.nn.Identity
+          predict_target_transform:
+            class_path: torch.nn.Identity

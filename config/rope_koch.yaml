@@ -1,0 +1,171 @@
+---
+seed_everything: 42
+
+model:
+  class_path: gpt_worldmodel.worldmodel.GPTWorldModel
+  init_args:
+    num_heads: 4
+    num_layers: 8
+    embed_size: 256
+    max_length: 16
+    action_vocab_size: 2048
+    observation_vocab_size: 1024
+
+optimizer:
+  class_path: torch.optim.AdamW
+  init_args:
+    lr: 0.001
+
+trainer:
+  accelerator: gpu
+  max_epochs: -1
+  gradient_clip_val: 1
+  precision: 16-mixed
+  log_every_n_steps: 1
+  logger:
+    class_path: WandbLogger
+    init_args:
+      log_model: true
+      project: gpt-worldmodel-test-rope
+      save_dir: .venv
+  callbacks:
+    -
+      class_path: LearningRateMonitor
+    -
+      class_path: EarlyStopping
+      init_args:
+        monitor: val_loss
+        patience: 100
+        mode: min
+        verbose: True
+    -
+      class_path: ModelCheckpoint
+      init_args:
+        save_last: True
+        mode: min
+        save_top_k: 1
+    -
+      class_path: gpt_worldmodel.worldmodel.LogWorldModelGenerations
+      init_args:
+        num_samples: 4
+        every_n_epochs: 100
+        fps: 20
+        decoder_reference:  nomutin/gpt-worldmodel-test-rope-vqvae/model-e2nq719q:v0
+
+data:
+  class_path: gpt_worldmodel.dataset.EpisodeDataModule
+  init_args:
+    config:
+      data_name: rope_koch
+      processed_data_name: rope_koch-tokenized
+      batch_size: 8
+      num_workers: 4
+      train_ratio: 0.9
+      gdrive_id: 1XeR0FnL6yBJnqRAx--QjRW8sMlrSoOS0
+      data_defs:
+        - prefix: action*
+          preprocess:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.NormalizeAction
+                  init_args:
+                    max_array: [82.8, 134.3, 145.2, 109.4, 253.4, 41.9]
+                    min_array: [-74.3, 17.7, 21.0, -53.6, -259.1, -9.8]
+                - class_path: gpt_worldmodel.action_tokenizer.ActionProcessor
+                  init_args:
+                    reference: nomutin/gpt-worldmodel-test-tokenizer/model-w47kp4ik:v0
+          train_input_transform:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.RandomWindow
+                  init_args:
+                    window_size: 17
+                - class_path: gpt_worldmodel.transform.RemoveTail
+          train_target_transform:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.RandomWindow
+                  init_args:
+                    window_size: 17
+                - class_path: gpt_worldmodel.transform.RemoveHead
+          val_input_transform:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.RandomWindow
+                  init_args:
+                    window_size: 17
+                - class_path: gpt_worldmodel.transform.RemoveTail
+          val_target_transform:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.RandomWindow
+                  init_args:
+                    window_size: 17
+                - class_path: gpt_worldmodel.transform.RemoveHead
+          predict_input_transform:
+            class_path: torch.nn.Identity
+          predict_target_transform:
+            class_path: torch.nn.Identity
+        - prefix: observation*
+          preprocess:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: einops.layers.torch.Rearrange
+                  init_args:
+                    pattern: B H W C -> B C H W
+                - class_path: torchvision.transforms.Normalize
+                  init_args:
+                    mean: 0.0
+                    std: 255.0
+                - class_path: torchvision.transforms.Resize
+                  init_args:
+                    size: [128, 128]
+                - class_path: gpt_worldmodel.obs_tokenizer.ObservationProcessor
+                  init_args:
+                    reference: nomutin/gpt-worldmodel-test-rope-vqvae/model-e2nq719q:v0
+          train_input_transform:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.RandomWindow
+                  init_args:
+                    window_size: 17
+                - class_path: gpt_worldmodel.transform.RemoveTail
+                # - class_path: gpt_worldmodel.worldmodel.MaskGitAugmentation
+                #   init_args:
+                #     num_factored_vocabs: 2
+                #     factored_vocab_size: 256
+          train_target_transform:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.RandomWindow
+                  init_args:
+                    window_size: 17
+                - class_path: gpt_worldmodel.transform.RemoveHead
+          val_input_transform:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.RandomWindow
+                  init_args:
+                    window_size: 17
+                - class_path: gpt_worldmodel.transform.RemoveTail
+          val_target_transform:
+            class_path: torchvision.transforms.Compose
+            init_args:
+              transforms:
+                - class_path: gpt_worldmodel.transform.RandomWindow
+                  init_args:
+                    window_size: 17
+                - class_path: gpt_worldmodel.transform.RemoveHead
+          predict_input_transform:
+            class_path: torch.nn.Identity
+          predict_target_transform:
+            class_path: torch.nn.Identity

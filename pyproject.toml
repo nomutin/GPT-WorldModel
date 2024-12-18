@@ -1,0 +1,63 @@
+[project]
+name = "gpt-worldmodel"
+version = "0.1.0"
+description = "GPT-style World Model"
+readme = "README.md"
+authors = [
+    { name = "nomutin", email = "nomura0508@icloud.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "beartype>=0.19.0",
+    "einops>=0.8.0",
+    "jaxtyping>=0.2.36",
+    "lightning>=2.4.0",
+    "rotary-embedding-torch>=0.8.6",
+    "torchvision>=0.20.1",
+    "wget>=3.2",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[dependency-groups]
+dev = [
+    "jsonargparse[signatures]>=4.35.0",
+    "mypy>=1.13.0",
+    "pydoclint>=0.5.9",
+    "pytest-cov>=6.0.0",
+    "ruff>=0.7.2",
+    "types-pyyaml>=6.0.12.20240917",
+    "wandb[media]>=0.19.1",
+]
+
+[tool.mypy]
+python_version = "3.10"
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+preview = true
+select = ["ALL"]
+ignore = ["CPY001", "F722"]
+fixable = ["ALL"]
+unfixable = []
+exclude = [".git", ".ruff_cache", ".venv",]
+dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
+
+[tool.ruff.lint.per-file-ignores]
+"__init__.py" = ["D"]
+
+[tool.ruff.format]
+preview = true
+
+[tool.ruff.lint.pydocstyle]
+convention = "numpy"
+
+[tool.pydoclint]
+style = 'numpy'
+exclude = '\.git|\.ruff_cache|\.mypy_cache|\.venv'
