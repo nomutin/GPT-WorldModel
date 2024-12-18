@@ -187,7 +187,7 @@ class EpisodeDataModule(LightningDataModule):
         train_dataset_list, val_dataset_list, predict_dataset_list = [], [], []
         for data_type in self.config.data_defs:
             path_list = sorted(self.config.processed_data_dir.glob(data_type.prefix))
-            train_path_list, val_path_list = split_path_list(path_list)
+            train_path_list, val_path_list = split_path_list(path_list, train_ratio=self.config.train_ratio)
             train_dataset_list.extend([
                 EpisodeDataset(train_path_list, data_type.train_input_transform),
                 EpisodeDataset(train_path_list, data_type.train_target_transform),
