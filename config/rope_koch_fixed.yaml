@@ -59,8 +59,8 @@ data:
       processed_data_name: rope_koch_fixed-120x160
       batch_size: 4
       num_workers: 4
-      train_ratio: 0.75
-      gdrive_id: 1ERZeS4kfuA8OdFOhAoUcGgPMY15QTry5
+      train_ratio: 0.25
+      gdrive_id: 12YXj0nMWO7UoZ98jNq8oQwmS2JWNFOH2
       data_defs:
         - prefix: action*
           preprocess:
@@ -70,7 +70,7 @@ data:
                 - class_path: gpt_worldmodel.transform.NormalizeAction
                   init_args:
                     max_array: [3051, 2938, 3009, 3978, 4091, 2127]
-                    min_array: [0, 0, 0, 0, 0, 0]
+                    min_array: [993, 1588, 1192, 1833, 3, 2078]
                 - class_path: gpt_worldmodel.transform.PackAction
                   init_args:
                     step: 4
